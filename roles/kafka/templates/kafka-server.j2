@@ -1,0 +1,196 @@
+#!/bin/bash
+#
+# kafka-server      This shell script takes care of starting and stopping Kafka
+#
+# chkconfig: - 81 19
+#
+### BEGIN INIT INFO
+# Provides: kafka-server
+# Required-Start: $network $syslog $zookeeper-server
+# Required-Stop: $network $syslog
+# Default-Start:
+# Default-Stop:
+# Description: Kafka server
+# Short-Description: start and stop kafka-server
+### END INIT INFO
+#
+# - based on https://fedoraproject.org/wiki/Packaging:SysVInitScript?rd=Packaging/SysVInitScript
+
+## Source function library.
+. /etc/rc.d/init.d/functions 2> /dev/null || . /lib/lsb/init-functions 2> /dev/null
+
+prog="kafka-server"
+
+# Get instance specific config file
+[ -e /etc/sysconfig/$prog ] && . /etc/sysconfig/$prog
+[ -e /etc/default/$prog ] && . /etc/default/$prog
+
+lockfile=/var/lock/subsys/$prog
+
+# For SELinux we need to use 'runuser' not 'su'
+if [ -x "/sbin/runuser" ]; then
+    SU="/sbin/runuser -s /bin/sh"
+else
+    SU="/bin/su -s /bin/sh"
+fi
+
+# Define the kafka username
+KAFKA_USER="${KAFKA_USER:-{{ kafka_user }}}"
+
+# Define the kafka group
+KAFKA_GROUP="${KAFKA_GROUP:-`id -gn $KAFKA_USER 2> /dev/null`}"
+
+# Kafka home
+KAFKA_HOME="${KAFKA_HOME:-/opt/kafka}"
+
+# Kafka startup script
+KAFKA_START_SCRIPT="${KAFKA_HOME}/bin/kafka-server-start.sh"
+
+# Kafka configuration file
+KAFKA_CONFIG="{{ kafka_conf_dir }}/server.properties"
+
+# Time to wait in seconds, before sending SIGKILL to the process
+SHUTDOWN_WAIT=${SHUTDOWN_WAIT:-"30"}
+
+# Whether to output "attempting to shut down" messages or not
+SHUTDOWN_VERBOSE=${SHUTDOWN_VERBOSE:-false}
+
+retval="0"
+
+# Defining log_success, log_failure and log_warning to not depend on lsb being installed
+function log_success() {
+    echo -n $*
+    (success 2> /dev/null && echo) || log_end_msg 0 2> /dev/null
+}
+
+
+function log_failure() {
+    echo -n $*
+    (failure 2> /dev/null && echo) || log_end_msg 1 2> /dev/null
+}
+
+
+function log_warning() {
+    echo -n $*
+    (warning 2> /dev/null && echo) || log_end_msg 255 2> /dev/null
+}
+
+
+function checklockfile() {
+    if [ -f $lockfile ]; then
+        pid="$(/usr/bin/pgrep -d , -u ${KAFKA_USER} -G ${KAFKA_GROUP} java)"
+        [ "$?" == "2" ] && exit 2
+# The lockfile exists but the process is not running
+        if [ -z "$pid" ]; then
+            retval="2"
+        fi
+    fi
+}
+
+
+function status() {
+    checklockfile
+    if [ "$retval" -eq "2" ]; then
+        retval=2
+        [ "$log_messages" = "true" ] && log_failure "$prog lockfile exists but process is not running"
+    else
+        pid="$(/usr/bin/pgrep -d , -u ${KAFKA_USER} -G ${KAFKA_GROUP} java)"
+        [ "$?" == "2" ] && exit 2
+        if [ -z "$pid" ]; then
+            [ "$log_messages" = "true" ] && log_success "$prog is stopped"
+            retval="3"
+        else
+            [ "$log_messages" = "true" ] && log_success "$prog (pid ${pid}) is running..."
+            retval="0"
+        fi
+    fi
+}
+
+
+function start() {
+    echo -n "Starting $prog: "
+    log_messages=false
+    status
+    if [ "$retval" -eq "0" ]; then
+        log_success "${prog} (pid ${pid}) is already running..."
+    else
+        if [ -r /etc/rc.d/init.d/functions ]; then
+            daemon --user $KAFKA_USER $KAFKA_START_SCRIPT -daemon $KAFKA_CONFIG
+        else
+            $SU - $KAFKA_USER -c "$KAFKA_START_SCRIPT -daemon $KAFKA_CONFIG"
+        fi
+        sleep 3
+        status
+        if [ "$retval" -eq "3" ]; then
+            log_failure "Error code ${retval}"
+        else
+            retval=0
+            log_success
+            touch $lockfile 2> /dev/null
+        fi
+    fi
+}
+
+
+function stop() {
+    echo -n "Stopping $prog: "
+    log_messages=false
+    status
+    if [ "$retval" -ne "0" ]; then
+        log_success "${prog} is already stopped..."
+        rm -f $lockfile
+        retval=0
+    else
+        java_pids="$(ps ax | grep -i 'kafka\.Kafka' | grep java | grep -v grep | awk '{print $1}')"
+        # Try issuing SIGTERM
+        kill -15 $java_pids
+        sleep 3
+        count="0"
+        until [ "$(ps --pid $pid | grep -c $pid)" -eq "0" ] || [ "$count" -gt "$SHUTDOWN_WAIT" ]; do
+            [ "$SHUTDOWN_VERBOSE" = "true" ] && echo "waiting for processes $pid to exit"
+            sleep 1
+            let count="${count}+1"
+        done
+        if [ "$count" -gt "$SHUTDOWN_WAIT" ]; then
+            [ "$SHUTDOWN_VERBOSE" = "true" ] && log_warning "killing processes which did not stop after ${SHUTDOWN_WAIT} seconds"
+            kill -9 $pid
+        fi
+        log_success
+        rm -f $lockfile
+        retval=0
+    fi
+}
+
+
+function restart() {
+    stop
+    sleep 1
+    [ "$retval" -eq "0" ] && start
+}
+
+case "$1" in
+    start|stop|restart)
+        $1
+        ;;
+    force-reload)
+        restart
+        ;;
+    status)
+        log_messages=true
+        status
+        ;;
+    try-restart|condrestart)
+        if status >/dev/null ; then
+            restart
+        fi
+	;;
+    reload)
+        echo "Configuration reload not possible with $prog. Use restart."
+        retval="3"
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|status|restart|try-restart|force-reload}"
+        exit 2
+esac
+
+exit $retval

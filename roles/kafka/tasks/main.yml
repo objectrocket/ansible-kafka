@@ -1,0 +1,48 @@
+---
+- name: "Install JDK 1.7"
+  yum: name=java-1.7.0-openjdk-devel state=present
+
+- name: add group "kafka"
+  group: name={{ kafka_group }} system=yes
+
+- name: add user "kafka"
+  user: name={{ kafka_group }} group={{ kafka_group }} home={{ kafka_data_dir }} shell=/sbin/nologin system=yes
+
+- name: "Download the tarball"
+  get_url: url="http://{{ apache_mirror }}/kafka/{{ kafka_version }}/kafka_2.9.2-{{ kafka_version }}.tgz" dest=/opt/kafka_2.9.2-{{ kafka_version }}.tgz
+
+- name: Extract archive
+  unarchive: src=/opt/kafka_2.9.2-{{ kafka_version }}.tgz dest=/opt/ copy=no creates=/opt/kafka_2.9.2-{{ kafka_version }}
+
+- name: Symlink install directory
+  file: src=/opt/kafka_2.9.2-{{ kafka_version }} path=/opt/kafka state=link
+
+- name: Set permissions to Kafka folder
+  file: path=/opt/kafka/ owner=root group=root recurse=yes
+
+- name: Create Kafka data directory
+  file: path={{ kafka_data_dir }} state=directory owner={{ kafka_user }} group={{ kafka_group }}
+
+- name: Create Kafka log directory
+  file: path={{ kafka_log_dir }} state=directory owner={{ kafka_user }} group={{ kafka_group }}
+
+- name: Link the log directory
+  file: src={{ kafka_log_dir }} path=/opt/kafka/logs state=link
+
+- name: Create Kafka conf directory
+  file: path={{ kafka_conf_dir }} state=directory owner=root group=root mode=755
+
+- name: Configure Kafka server
+  template: src=server.properties.j2 dest="{{kafka_conf_dir}}/server.properties"
+
+- name: Upload log4j configs
+  copy: src={{ item }} dest="{{ kafka_conf_dir }}/" owner=root group=root mode=644
+  with_items:
+    - log4j.properties
+    - tools-log4j.properties
+
+- name: Install Kafka init script
+  template: src=kafka-server.j2 dest=/etc/init.d/kafka-server mode=0755
+
+- name: Enable and start Kafka service
+  service: name=kafka-server enabled=yes state=restarted

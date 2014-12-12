@@ -1,0 +1,167 @@
+---
+- name: "Load rax_cbd custom module"
+  hosts: localhost
+  connection: local
+  gather_facts: False
+  roles:
+    - cbd_module
+
+- name: "Build Kafka environment"
+  hosts: localhost
+  connection: local
+  gather_facts: False
+
+  vars:
+    - files:
+        /root/.ssh/authorized_keys: "{{ rax_sshkeyfile }}"
+
+  tasks:
+    - name: "Create cloud servers"
+      local_action:
+        module: rax
+        credentials: "{{ credentials_file }}"
+        name: kafka-%02d.localnet
+        image: "{{ kafka_image }}"
+        flavor: "{{ kafka_flavor }}"
+        count: "{{ kafka_count }}"
+        files: "{{ files }}"
+        region: "{{ rax_region }}"
+        group: kafka_cluster
+        state: present
+        exact_count: yes
+        wait: true
+      register: rax
+
+    - name: "Add Kafka servers to variable group"
+      local_action:
+        module: add_host
+        hostname: "{{ item.1.name }}"
+        servicenet_ip: "{{ item.1.rax_addresses.private[0].addr }}"
+        id: "{{ item.0 + 1 }}"
+        ansible_ssh_host: "{{ item.1.rax_accessipv4 }}"
+        ansible_ssh_user: root
+        groupname: kafka_cluster
+      with_indexed_items: rax.instances
+
+
+- name: "Build CBD environment"
+  hosts: localhost
+  connection: local
+  gather_facts: False
+  tasks:
+    - name: "Create CBD cluster"
+      local_action:
+        module: rax_cbd
+        credentials: "{{ credentials_file }}"
+        name: "{{ cbd_name }}"
+        type: "{{ cbd_type }}"
+        flavor: "{{ cbd_flavor }}"
+        nodes: "{{ cbd_nodes }}"
+        profile_username: "{{ cbd_profile_username }}"
+        profile_password: "{{ cbd_profile_password }}"
+        sshkeyname: "{{ rax_sshkeyname }}"
+        sshkeyfile: "{{ rax_sshkeyfile }}"
+        region: "{{ rax_region }}"
+        state: present
+        wait: true
+      register: my_cbd
+
+    - name: "Add gateway to group"
+      local_action:
+        module: add_host
+        hostname: "{{ my_cbd.cluster.gateway.name }}"
+        ansible_ssh_host: "{{ my_cbd.cluster.gateway.public_v4_address }}"
+        ansible_ssh_user: "{{ my_cbd.cluster.credentials.profile_username }}"
+        groupname: cbd_gateway
+      when: my_cbd.cluster.status == 'ACTIVE'
+
+    - name: "Add namenode to group"
+      local_action:
+        module: add_host
+        hostname: "{{ my_cbd.cluster.namenode.name }}"
+        ansible_ssh_host: "{{ my_cbd.cluster.namenode.public_v4_address }}"
+        ansible_ssh_user: "{{ my_cbd.cluster.credentials.profile_username }}"
+        groupname: cbd_nodes
+      when: my_cbd.cluster.status == 'ACTIVE'
+
+    - name: "Add datanodes to group"
+      local_action:
+        module: add_host
+        hostname: "{{ item.name }}"
+        ansible_ssh_host: "{{ item.public_v4_address }}"
+        ansible_ssh_user: "{{ my_cbd.cluster.credentials.profile_username }}"
+        groupname: cbd_nodes
+      with_items: my_cbd.cluster.datanodes
+      when: my_cbd.cluster.status == 'ACTIVE'
+
+
+- name: "Show debug info"
+  hosts: localhost
+  connection: local
+  gather_facts: False
+  tasks:
+    - name: "CBD cluster info"
+      debug: var=my_cbd
+    - name: "Kafka cluster info"
+      debug: var=hostvars[item]
+      with_items: groups['kafka_cluster']
+
+
+- name: "Apply common role to the CBD cluster"
+  hosts: cbd_gateway:cbd_nodes
+  sudo: yes
+  roles:
+    - common
+
+
+- name: "Apply common role to the Kafka cluster"
+  hosts: kafka_cluster
+  roles:
+    - common
+
+
+- name: "Set hosts file and iptables on the Kafka cluster"
+  hosts: kafka_cluster
+  handlers:
+  - name: restart iptables
+    service:
+      name=iptables
+      state=restarted
+  tasks:
+    - name: Set hosts file
+      lineinfile: dest=/etc/hosts
+                  line="{{ hostvars[item]['servicenet_ip'] }} {{ hostvars[item]['inventory_hostname'] }}"
+                  state=present
+      with_items: play_hosts
+
+    - name: Set iptables
+      lineinfile: dest=/etc/sysconfig/iptables
+                  insertbefore="^-A INPUT"
+                  line="-A INPUT -s {{ hostvars[item]['servicenet_ip'] }}/32 -j ACCEPT"
+                  state=present
+      with_items: play_hosts
+      notify: restart iptables
+
+
+- name: "Set iptables on the CBD gateway"
+  hosts: cbd_gateway
+  sudo: yes
+  handlers:
+  - name: restart iptables
+    service:
+      name=iptables
+      state=restarted
+  tasks:
+    - name: Set iptables to allow Kafka servers
+      lineinfile: dest=/etc/sysconfig/iptables
+                  insertbefore="^-A INPUT"
+                  line="-A INPUT -s {{ hostvars[item]['servicenet_ip'] }}/32 -j ACCEPT"
+                  state=present
+      with_items: groups['kafka_cluster']
+      notify: restart iptables
+
+
+- name: "Apply zookeeper and kafka roles to the Kafka cluster"
+  hosts: kafka_cluster
+  roles:
+    - kafka

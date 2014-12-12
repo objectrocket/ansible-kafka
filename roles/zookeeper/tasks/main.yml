@@ -1,0 +1,45 @@
+---
+- name: "Install JDK 1.7"
+  yum: name=java-1.7.0-openjdk-devel state=present
+
+- name: add group "zookeeper"
+  group: name={{ zookeeper_group }} system=yes
+
+- name: add user "zookeeper"
+  user: name={{ zookeeper_group }} group={{ zookeeper_group }} home={{ zookeeper_data_dir }} shell=/sbin/nologin system=yes
+
+- name: "Download the tarball"
+  get_url: url=http://{{ apache_mirror }}/zookeeper/stable/zookeeper-{{ zookeeper_version }}.tar.gz dest=/opt/zookeeper-{{ zookeeper_version }}.tar.gz
+
+- name: Extract archive
+  unarchive: src=/opt/zookeeper-{{ zookeeper_version }}.tar.gz dest=/opt/ copy=no creates=/opt/zookeeper-{{ zookeeper_version }}
+
+- name: Symlink install directory
+  file: src=/opt/zookeeper-{{ zookeeper_version }} path=/opt/zookeeper state=link
+
+- name: Set permissions to Zookeeper folder
+  file: path=/opt/zookeeper/ owner=root group=root recurse=yes
+
+- name: Create Zookeeper data directory
+  file: path={{ zookeeper_data_dir }} state=directory owner={{ zookeeper_user }} group={{ zookeeper_group }}
+
+- name: Create Zookeeper log directory
+  file: path={{ zookeeper_log_dir }} state=directory owner={{ zookeeper_user }} group={{ zookeeper_group }}
+
+- name: Create Zookeeper conf directory
+  file: path={{ zookeeper_conf_dir }} state=directory owner=root group=root mode=755
+
+- name: Configure Zookeeper server
+  template: src=zoo.cfg.j2 dest="{{zookeeper_conf_dir}}/zoo.cfg"
+
+- name: Configure myid
+  template: src=myid.j2 dest="{{ zookeeper_data_dir }}/myid"
+
+- name: Upload log4j config
+  copy: src=log4j.properties dest="{{ zookeeper_conf_dir }}/log4j.properties" owner=root group=root mode=644
+
+- name: Install Zookeeper init script
+  template: src=zookeeper-server.j2 dest=/etc/init.d/zookeeper-server mode=0755
+
+- name: Enable and start Zookeeper service
+  service: name=zookeeper-server enabled=yes state=restarted

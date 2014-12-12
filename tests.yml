@@ -1,0 +1,22 @@
+---
+- name: Gather info about servers
+  hosts: servers
+  gather_facts: False
+  tasks:
+    - name: Get facts about servers
+      local_action:
+        module: rax_facts
+        credentials: "{{ hostvars.localhost.credentials_file }}"
+        name: "{{ inventory_hostname }}"
+        region: "{{ hostvars.localhost.rax_region }}"
+    - name: Map some facts
+      set_fact:
+        ansible_ssh_user: root
+        ansible_ssh_host: "{{ rax_accessipv4 }}"
+        hostname: "{{ inventory_hostname }}"
+        id: "{{ id }}"
+        servicenet_ip: "{{ rax_addresses.private[0].addr }}"
+
+- hosts: servers
+  roles:
+      - kafka
