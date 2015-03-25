@@ -43,3 +43,6 @@
 
 - name: Enable and start Zookeeper service
   service: name=zookeeper-server enabled=yes state=restarted
+
+- name: Add Zookeeper binaries to PATH
+  copy: src=zookeeper.sh dest=/etc/profile.d/ owner=root group=root mode=644
