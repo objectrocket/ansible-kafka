@@ -46,3 +46,6 @@
 
 - name: Enable and start Kafka service
   service: name=kafka-server enabled=yes state=restarted
+
+- name: Add Kafka binaries to PATH
+  copy: src=kafka.sh dest=/etc/profile.d/ owner=root group=root mode=644
