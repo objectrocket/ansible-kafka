@@ -3,6 +3,8 @@
   hosts: localhost
   connection: local
   gather_facts: False
+  tags:
+    - cbd
   roles:
     - cbd_module
 
@@ -10,6 +12,8 @@
   hosts: localhost
   connection: local
   gather_facts: False
+  tags:
+    - kafka
 
   vars:
     - files:
@@ -48,6 +52,8 @@
   hosts: localhost
   connection: local
   gather_facts: False
+  tags:
+    - cbd
   tasks:
     - name: "Create CBD cluster"
       local_action:
@@ -102,26 +108,34 @@
   tasks:
     - name: "CBD cluster info"
       debug: var=my_cbd
+      tags: cbd
     - name: "Kafka cluster info"
       debug: var=hostvars[item]
       with_items: groups['kafka_cluster']
+      tags: kafka
 
 
 - name: "Apply common role to the CBD cluster"
   hosts: cbd_gateway:cbd_nodes
   sudo: yes
+  tags:
+    - cbd
   roles:
     - common
 
 
 - name: "Apply common role to the Kafka cluster"
   hosts: kafka_cluster
+  tags:
+    - kafka
   roles:
     - common
 
 
 - name: "Set hosts file and iptables on the Kafka cluster"
   hosts: kafka_cluster
+  tags:
+    - kafka
   handlers:
   - name: restart iptables
     service:
@@ -146,6 +160,8 @@
 - name: "Set iptables on the CBD gateway"
   hosts: cbd_gateway
   sudo: yes
+  tags:
+    - cbd
   handlers:
   - name: restart iptables
     service:
@@ -157,11 +173,14 @@
                   insertbefore="^-A INPUT"
                   line="-A INPUT -s {{ hostvars[item]['servicenet_ip'] }}/32 -j ACCEPT"
                   state=present
-      with_items: groups['kafka_cluster']
+      with_items: groups.kafka_cluster
       notify: restart iptables
+      when: "'kafka_cluster' in groups|list"
 
 
 - name: "Apply zookeeper and kafka roles to the Kafka cluster"
   hosts: kafka_cluster
+  tags:
+    - kafka
   roles:
     - kafka
