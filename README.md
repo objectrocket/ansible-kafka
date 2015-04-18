@@ -1,6 +1,8 @@
 ansible-kafka
 ---------
-This is an Ansible module that deploys a Kafka cluster with Zookeeper.
+This Ansible playbook will build a Kafka cluster with Zookeeper.
+
+You can pre-build a Rackspace cloud environment or run the playbook against an existing environment.
 
 ### Requirements
 - Requires Ansible 1.8 or newer
