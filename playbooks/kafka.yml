@@ -20,6 +20,12 @@
       debug: var=hostvars[inventory_hostname]
       when: debug
 
+- name: "Apply the common role to all nodes"
+  hosts: kafka-nodes
+  sudo: yes
+  sudo_user: root
+  roles:
+    - common
 
 - name: "Apply zookeeper and kafka roles to the Kafka cluster"
   hosts: kafka-nodes
