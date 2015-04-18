@@ -1,0 +1,44 @@
+---
+- name: "Build the environment"
+  hosts: localhost
+  connection: local
+  gather_facts: False
+  tasks:
+    - name: Create the SSH keypair
+      local_action:
+        module: rax_keypair
+        credentials: "{{ cloud_config.rax_credentials_file }}"
+        name: "{{ cloud_config.ssh.keyname }}"
+        public_key: "{{ lookup('file', cloud_config.ssh.keyfile) }}"
+        region: "{{ cloud_config.rax_region }}"
+
+    - name: Include kafka-nodes group variables
+      include_vars: group_vars/kafka-nodes
+
+    - name: "Create kafka nodes"
+      local_action:
+        module: rax
+        credentials: "{{ cloud_config.rax_credentials_file }}"
+        name: "kafka-%02d.{{ cloud_config.domain }}"
+        image: "{{ cloud_image }}"
+        flavor: "{{ cloud_flavor }}"
+        count: "{{ cloud_nodes_count }}"
+        region: "{{ cloud_config.rax_region }}"
+        key_name: "{{ cloud_config.ssh.keyname }}"
+        exact_count: yes
+        auto_increment: true
+        group: kafka-nodes
+        state: present
+        wait: true
+        wait_timeout: 900
+      register: rax_kafka
+      when: cloud_nodes_count > 0
+
+- name: "Show debug info"
+  hosts: localhost
+  connection: local
+  gather_facts: False
+  tasks:
+    - name: "Show rax_kafka info"
+      debug: var=rax_kafka
+      when: debug
