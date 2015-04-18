@@ -1,27 +1,49 @@
-kafka-poc - deploys a Kafka cluster with a Rackspace Cloud Big Data Spark cluster
+ansible-kafka
 ---------
+This is an Ansible module that deploys a Kafka cluster with Zookeeper.
 
-This is an example of how a Kafka cluster can be built and configured.
-It also builds a Rackspace Cloud Big Data Spark cluster and configures iptables to allow the two to communicate.
+### Requirements
+- Requires Ansible 1.8 or newer
 
-As a prerequisite, the python-lavaclient module for Cloud Big Data has to be installed: http://docs.rackspace.com/cbd/api/v1.0/cbd-getting-started/content/installing_Client.html
+- Expects CentOS/RHEL 6.x hosts
 
-It uses the standard pyrax credentials file that looks like:
+- Building the cloud environment requires the `pyrax` Python module: https://github.com/rackspace/pyrax
+
+  Also recommended is to run `pip install oslo.config netifaces`.
+
+- The cloud environment requires the standard pyrax credentials file that looks like this:
+  ````
+  [rackspace_cloud]
+  username = my_username
+  api_key = 01234567890abcdef
+  ````
+  
+  This file will be referenced in `playbooks/group_vars/all` (the `rax_credentials_file` variable).
+
+  By default, the file is expected to be: `~/.raxpub`
+
+### Configuration files
+
+To customize, change the variables under `playbooks/group_vars` and `playbooks/roles` folders:
+
+1. **playbooks/group_vars/all**: contains global cluster and cloud settings
+1. **playbooks/group_vars/kafka-nodes**: kafka-nodes general configuration settings
+1. **playbooks/roles/zookeeper/defaults/main.yml**: Zookeeper specific settings
+1. **playbooks/roles/kafka/defaults/main.yml**: Kafka specific settings
+
+For a one-node cluster, set `cloud_nodes_count` in `playbooks/group_vars/kafka-nodes` to 1.
+
+## Scripts
+
+To provision a cloud environment, run the `provision_rax.sh` script after you've customized the variables under group_vars:
 ````
-[rackspace_cloud]
-username = my_username
-api_key = 01234567890abcdef
+bash provision_rax.sh
 ````
+Similarly, run the one of the `kafka_*.sh` scripts, depending what type of environment you have.
 
-Customization can be done by changing the variables in the inventory file.
+Example for a cloud environment:
+````
+bash kafka_rax.sh
+````
+For dedicated / prebuilt environments, you'll need to manually add the nodes in the `inventory/static` file.
 
-#### Example run:
-````
-ansible-playbook -i inventory site.yml
-````
-
-#### The Cloud Big Data build can be skipped if only a Kafka cluster is required:
-
-````
-ansible-playbook -i inventory site.yml  --skip-tags "cbd"
-````
