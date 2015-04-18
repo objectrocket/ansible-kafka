@@ -26,7 +26,7 @@ port=9092
 
 # Hostname the broker will bind to. If not set, the server will bind to all interfaces
 #host.name=localhost
-host.name={{ hostvars[inventory_hostname]['inventory_hostname'] }}
+host.name={{ hostvars[inventory_hostname]['ansible_fqdn'] }}
 
 # Hostname the broker will advertise to producers and consumers. If not set, it uses the
 # value for "host.name" if configured.  Otherwise, it will use the value returned from
@@ -112,7 +112,7 @@ log.cleaner.enable=false
 # server. e.g. "127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002".
 # You can also append an optional chroot string to the urls to specify the
 # root directory for all kafka znodes.
-zookeeper.connect={% for server in play_hosts %}{{ hostvars[server]['inventory_hostname'] }}:{{ zookeeper_client_port }},{% endfor %}
+zookeeper.connect={% for server in play_hosts %}{{ hostvars[server]['ansible_fqdn'] }}:{{ zookeeper_client_port }}{% if not loop.last %},{% endif %}{% endfor %}
 
 
 # Timeout in ms for connecting to zookeeper
