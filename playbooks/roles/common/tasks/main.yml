@@ -77,3 +77,5 @@
 
 - include: iptables.yml
   when: cloud_nodes_count is defined and cloud_nodes_count > 0
+
+- include: partitioning.yml
