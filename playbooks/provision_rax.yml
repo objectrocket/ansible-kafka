@@ -34,6 +34,36 @@
       register: rax_kafka
       when: cloud_nodes_count > 0
 
+    - name: "Create CBS Volumes for kafka nodes"
+      local_action:
+        module: rax_cbs
+        credentials: "{{ cloud_config.rax_credentials_file }}"
+        name: "{{ item[0].name }}_{{ item[1] }}"
+        volume_type: "{{ cbs_disks_type }}"
+        size: "{{ cbs_disks_size }}"
+        region: "{{ cloud_config.rax_region }}"
+        state: present
+        wait: true
+      with_nested:
+        - rax_kafka.instances
+        - data_disks_devices
+      when: cloud_nodes_count > 0 and build_cbs
+
+    - name: "Attach CBS Volumes to kafka nodes"
+      local_action:
+        module: rax_cbs_attachments
+        credentials: "{{ cloud_config.rax_credentials_file }}"
+        volume: "{{ item[0].name }}_{{ item[1] }}"
+        server: "{{ item[0].id }}"
+        region: "{{ cloud_config.rax_region }}"
+        device: "/dev/{{ item[1] }}"
+        state: present
+        wait: true
+      with_nested:
+        - rax_kafka.instances
+        - data_disks_devices
+      when: cloud_nodes_count > 0 and build_cbs
+
 - name: "Show debug info"
   hosts: localhost
   connection: local
