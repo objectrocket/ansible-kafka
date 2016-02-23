@@ -1,7 +1,4 @@
 ---
-- name: "Install JDK 1.7"
-  yum: name=java-1.7.0-openjdk-devel state=present
-
 - name: add group "zookeeper"
   group: name={{ zookeeper_group }} system=yes
 
@@ -40,8 +37,11 @@
 
 - name: Install Zookeeper init script
   template: src=zookeeper-server.j2 dest=/etc/init.d/zookeeper-server mode=0755
+  notify: reload systemd
 
-- name: Enable and start Zookeeper service
+- meta: flush_handlers
+
+- name: Make sure Zookeeper is running
   service: name=zookeeper-server enabled=yes state=restarted
 
 - name: Add Zookeeper binaries to PATH

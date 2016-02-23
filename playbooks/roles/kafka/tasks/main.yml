@@ -1,7 +1,4 @@
 ---
-- name: "Install JDK 1.7"
-  yum: name=java-1.7.0-openjdk-devel state=present
-
 - name: add group "kafka"
   group: name={{ kafka_group }} system=yes
 
@@ -49,9 +46,12 @@
 
 - name: Install Kafka init script
   template: src=kafka-server.j2 dest=/etc/init.d/kafka-server mode=0755
+  notify: reload systemd
 
-- name: Enable and start Kafka service
-  service: name=kafka-server enabled=yes state=restarted
+- meta: flush_handlers
+
+- name: Make sure Kafka is running
+  service: name=kafka-server enabled=yes state=started
 
 - name: Add Kafka binaries to PATH
   copy: src=kafka.sh dest=/etc/profile.d/ owner=root group=root mode=644

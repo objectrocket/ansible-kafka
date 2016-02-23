@@ -3,9 +3,10 @@
 ## cloud servers ##
 ###################
 
-cluster_interface: 'ansible_eth1'
+cluster_interface: 'eth1'
 cloud_nodes_count: 3
-cloud_image: 'CentOS 6 (PVHVM)'
+cloud_image: 'CentOS 7 (PVHVM)'
+# cloud_image: 'Ubuntu 14.04 LTS (Trusty Tahr) (PVHVM)'
 cloud_flavor: 'general1-2'
 build_cbs: false
 cbs_disks_size: 100
@@ -16,9 +17,9 @@ data_disks_devices: []
 # onmetal #
 ###########
 
-# cluster_interface: 'ansible_bond0.401'
+# cluster_interface: 'bond0.401'
 # cloud_nodes_count: 3
-# cloud_image: 'OnMetal - CentOS 6'
+# cloud_image: 'OnMetal - CentOS 7'
 # cloud_flavor: 'onmetal-io1'
 # build_cbs: false
 # cbs_disks_size:
@@ -29,5 +30,5 @@ data_disks_devices: []
 # dedicated #
 #############
 
-# cluster_interface: 'ansible_bond0'
+# cluster_interface: 'bond0'
 # data_disks_devices: ['sdb']
