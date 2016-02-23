@@ -1,5 +1,6 @@
 ---
 ansible_ssh_user: 'root'
+kafka_version: 0.9.0.1
 
 cloud_config:
   rax_credentials_file: '~/.raxpub'
