@@ -44,7 +44,7 @@
       with_nested:
         - rax_kafka.instances
         - data_disks_devices
-      when: cloud.nodes_count > 0 and cloud.build_cbs
+      when: cloud.nodes_count > 0 and cloud.cbs.build_cbs
 
     - name: "Attach CBS Volumes to kafka nodes"
       local_action:
@@ -59,7 +59,7 @@
       with_nested:
         - rax_kafka.instances
         - data_disks_devices
-      when: cloud.nodes_count > 0 and cloud.build_cbs
+      when: cloud.nodes_count > 0 and cloud.cbs.build_cbs
 
 - name: "Show debug info"
   hosts: localhost
