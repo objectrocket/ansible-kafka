@@ -7,7 +7,7 @@
     - name: Create the SSH keypair
       local_action:
         module: rax_keypair
-        credentials: "{{ cloud.credentials_file }}"
+        credentials: "{{ credentials_file }}"
         name: "{{ cloud.ssh.keyname }}"
         public_key: "{{ lookup('file', cloud.ssh.keyfile) }}"
         region: "{{ cloud.region }}"
@@ -15,7 +15,7 @@
     - name: "Create kafka nodes"
       local_action:
         module: rax
-        credentials: "{{ cloud.credentials_file }}"
+        credentials: "{{ credentials_file }}"
         name: "kafka-%02d.{{ cloud.domain }}"
         image: "{{ cloud.image }}"
         flavor: "{{ cloud.flavor }}"
@@ -34,7 +34,7 @@
     - name: "Create CBS Volumes for kafka nodes"
       local_action:
         module: rax_cbs
-        credentials: "{{ cloud.credentials_file }}"
+        credentials: "{{ credentials_file }}"
         name: "{{ item[0].name }}_{{ item[1] }}"
         volume_type: "{{ cloud.cbs.disks_type }}"
         size: "{{ cloud.cbs.disks_size }}"
@@ -49,7 +49,7 @@
     - name: "Attach CBS Volumes to kafka nodes"
       local_action:
         module: rax_cbs_attachments
-        credentials: "{{ cloud.credentials_file }}"
+        credentials: "{{ credentials_file }}"
         volume: "{{ item[0].name }}_{{ item[1] }}"
         server: "{{ item[0].id }}"
         region: "{{ cloud.region }}"

@@ -4,7 +4,6 @@ cluster_interface: 'eth1'
 data_disks_devices: []
 
 cloud:
-  credentials_file: '~/.raxpub'
   region: 'LON'
   domain: 'localnet'
   nodes_count: 3
