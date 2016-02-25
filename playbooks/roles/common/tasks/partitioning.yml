@@ -5,15 +5,20 @@
   register: disk_offset
 
 - name: Partition and format data disks
-  shell: parted -s -a optimal /dev/{{ item }} mklabel gpt mkpart primary xfs {{ disk_offset.stdout|default("2048") }}s 100% && sleep 2 && partprobe /dev/{{ item }} && sleep 2 && mkfs.xfs -m1 /dev/{{ item }}1
-  when: data_disks_devices is defined and data_disks_devices and ansible_devices[item]['partitions'] == {}
+  shell: parted -s -a optimal /dev/{{ item }} mklabel gpt mkpart primary xfs {{ disk_offset.stdout|default("2048") }}s 100% && sleep 5 && partprobe /dev/{{ item }}; sleep 5
+  when: ansible_devices[item] is defined and ansible_devices[item]['partitions'] == {}
+  with_items: data_disks_devices
+
+- name: Create the filesystem on data disks
+  filesystem: dev="/dev/{{ item }}1" fstype="xfs"
+  when: ansible_devices[item] is defined
   with_items: data_disks_devices
 
 - name: Mount single data disk under /kafka
   mount: state=mounted src="/dev/{{ data_disks_devices[0] }}1" name="/kafka" fstype=xfs opts=defaults,noatime dump=0 passno=0
-  when: data_disks_devices is defined and data_disks_devices and data_disks_devices|length == 1
+  when: ansible_devices[data_disks_devices[0]] is defined and data_disks_devices|length == 1
 
 - name: Mount multiple data disks under /disk{}
   mount: state=mounted src="/dev/{{ item.1 }}1" name="/disk{{ item.0 + 1 }}" fstype=xfs opts=defaults,noatime dump=0 passno=0
+  when: ansible_devices[data_disks_devices[item.1]] is defined and data_disks_devices|length > 1
   with_indexed_items: data_disks_devices
-  when: data_disks_devices is defined and data_disks_devices and data_disks_devices|length > 1

@@ -99,3 +99,4 @@
   when: cloud.nodes_count is defined and cloud.nodes_count > 0
 
 - include: partitioning.yml
+  when: data_disks_devices is defined and data_disks_devices
