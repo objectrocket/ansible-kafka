@@ -1,11 +1,19 @@
 ---
-ansible_ssh_user: 'root'
 kafka_version: 0.9.0.1
+cluster_interface: 'eth1'
+data_disks_devices: []
 
-cloud_config:
-  rax_credentials_file: '~/.raxpub'
-  rax_region: 'LON'
+cloud:
+  credentials_file: '~/.raxpub'
+  region: 'LON'
   domain: 'localnet'
+  nodes_count: 3
+  image: 'CentOS 7 (PVHVM)'
+  flavor: 'general1-2'
+  cbs:
+    build_cbs: false
+    disks_size: 100
+    disks_type: 'SATA'
   allowed_external_ips: ['127.0.0.1']
   ssh:
     keyname: 'kafka-ssh-key'
