@@ -1,4 +1,7 @@
 ---
+- name: restart iptables
+  service: name=iptables state=restarted enabled=yes
+
 - name: reload firewalld
   command: firewall-cmd --reload
 

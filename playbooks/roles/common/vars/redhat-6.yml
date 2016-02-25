@@ -1,0 +1,29 @@
+packages:
+  - java-1.8.0-openjdk-devel
+  - python-simplejson
+  - python-httplib2
+  - man
+  - man-pages
+  - vim-enhanced
+  - sysstat
+  - lsof
+  - jwhois
+  - nc
+  - libselinux-python
+  - ntp
+  - parted
+  - openssh-clients
+  - iotop
+  - unzip
+  - curl
+  - wget
+  - xfsprogs
+
+ntp_service: ntpd
+ntp_sync: "/usr/sbin/ntpd -gq"
+
+epel_url: "http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm"
+
+datastax_repo: "redhat-datastax_repo.j2"
+datastax_repo_file: "/etc/yum.repos.d/datastax.repo"
+datastax_repo_key: "http://rpm.datastax.com/rpm/repo_key"
