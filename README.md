@@ -22,9 +22,11 @@ See [INSTALL.md](../master/INSTALL.md) for installation and build instructions.
 
 ## [Features] (id:features)
 
-- It installs Zookeeper for Kafka (on a maximum of 3 nodes).
+- It installs Zookeeper for Kafka (Zookeeper is installed on the first 3 nodes only).
 
 - It supports static inventory if the environment is pre-built (`inventory/static` file).
+
+- The `id` is automatically set (on the inventory items in alphabetical order).
 
 - The data drives can be customized and can be put on top of Rackspace Cloud Block Storage.
 
