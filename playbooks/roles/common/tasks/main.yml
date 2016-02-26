@@ -15,7 +15,7 @@
 
 - name: Ensure required packages are installed (yum)
   yum:
-    name: item
+    name: "{{ item }}"
     update_cache: yes
     state: installed
   with_items: "{{ packages }}"
@@ -23,7 +23,7 @@
 
 - name: Ensure required packages are installed (apt)
   apt:
-    name: item
+    name: "{{ item }}"
     update_cache: yes
     state: installed
   with_items: "{{ packages }}"
