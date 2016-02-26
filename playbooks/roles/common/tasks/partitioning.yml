@@ -20,5 +20,5 @@
 
 - name: Mount multiple data disks under /disk{}
   mount: state=mounted src="/dev/{{ item.1 }}1" name="/disk{{ item.0 + 1 }}" fstype=xfs opts=defaults,noatime dump=0 passno=0
-  when: ansible_devices[data_disks_devices[item.1]] is defined and data_disks_devices|length > 1
+  when: ansible_devices[item.1] is defined and data_disks_devices|length > 1
   with_indexed_items: data_disks_devices
