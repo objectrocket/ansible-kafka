@@ -15,14 +15,14 @@ See [INSTALL.md](../master/INSTALL.md) for installation and build instructions.
 
 - Ansible >= 2.0.
 
-- Expects CentOS 7 or Ubuntu 14 hosts.
+- Expects RHEL/CentOS 6/7 or Ubuntu 14 hosts.
 
 - Building the Rackspace Cloud environment requires the `pyrax` Python module: [pyrax link](https://github.com/rackspace/pyrax).
 
 
 ## [Features] (id:features)
 
-- It installs Zookeeper alongside Kafka as a prerequisite.
+- It installs Zookeeper for Kafka (on a maximum of 3 nodes).
 
 - It supports static inventory if the environment is pre-built (`inventory/static` file).
 
