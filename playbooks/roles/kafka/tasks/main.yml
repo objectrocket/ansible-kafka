@@ -19,7 +19,7 @@
 
 - name: Create Kafka data directory
   file: path="/disk{{ item.0 + 1 }}/kafka/data" state=directory owner={{ kafka_user }} group={{ kafka_group }}
-  with_indexed_items: data_disks_devices
+  with_indexed_items: "{{ data_disks_devices }}"
   when: data_disks_devices is defined and data_disks_devices and data_disks_devices|length > 1
 
 - name: Create Kafka data directory
