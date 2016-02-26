@@ -1,0 +1,24 @@
+packages:
+  - openjdk-7-jdk
+  - python-simplejson
+  - man-db
+  - vim
+  - sysstat
+  - lsof
+  - netcat
+  - ntp
+  - parted
+  - iotop
+  - unzip
+  - curl
+  - wget
+  - ifenslave
+  - xfsprogs
+
+update_grub: "/usr/sbin/update-grub"
+
+ntp_service: ntp
+ntp_sync: "/usr/sbin/ntpd -gq"
+
+datastax_repo: "debian-datastax_repo.j2"
+datastax_repo_file: "/etc/apt/sources.list.d/datastax.sources.list"

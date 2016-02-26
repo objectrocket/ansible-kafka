@@ -1,6 +1,4 @@
 ---
-apache_mirror: apache.mirror.anlx.net
-kafka_version: 0.8.2.2
 kafka_user: kafka
 kafka_group: kafka
 kafka_conf_dir: /etc/kafka/config

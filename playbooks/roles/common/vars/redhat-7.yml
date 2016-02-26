@@ -1,0 +1,24 @@
+packages:
+  - java-1.8.0-openjdk-devel
+  - sysstat
+  - lsof
+  - parted
+  - openssh-clients
+  - unzip
+  - curl
+  - wget
+  - iotop
+  - ntpdate
+  - chrony
+  - nmap-ncat
+
+update_grub: 'cd && grub2-mkconfig -o "$(readlink -n /etc/grub2.cfg)"'
+
+ntp_service: chronyd
+ntp_sync: "systemctl restart ntpdate"
+
+epel_url: "https://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-5.noarch.rpm"
+
+datastax_repo: "redhat-datastax_repo.j2"
+datastax_repo_file: "/etc/yum.repos.d/datastax.repo"
+datastax_repo_key: "http://rpm.datastax.com/rpm/repo_key"

@@ -4,17 +4,33 @@
   connection: local
   gather_facts: False
   tasks:
+    - name: "Add a maximum of 3 nodes to the zookeeper-nodes group"
+      add_host:
+        name: "{{ hostvars[item.1].inventory_hostname }}"
+        ansible_host: "{{ hostvars[item.1].ansible_host|default(hostvars[item.1].ansible_ssh_host) }}"
+        ansible_user: "{{ hostvars[item.1].ansible_user|default('root') }}"
+        ansible_ssh_pass: "{{ hostvars[item.1].ansible_ssh_pass|default('') }}"
+        ansible_become_user: root
+        ansible_become_pass: "{{ hostvars[item.1].ansible_ssh_pass|default('') }}"
+        id: "{{ item.0 + 1 }}"
+        groups: zookeeper-nodes
+      with_indexed_items: "{{ groups['kafka-nodes']|sort|batch(3)|list|first }}"
+
     - name: "Add all cluster nodes to the kafka-nodes group"
       add_host:
         name: "{{ hostvars[item.1].inventory_hostname }}"
+        ansible_host: "{{ hostvars[item.1].ansible_host|default(hostvars[item.1].ansible_ssh_host) }}"
+        ansible_user: "{{ hostvars[item.1].ansible_user|default('root') }}"
+        ansible_ssh_pass: "{{ hostvars[item.1].ansible_ssh_pass|default('') }}"
+        ansible_become_user: root
+        ansible_become_pass: "{{ hostvars[item.1].ansible_ssh_pass|default('') }}"
         id: "{{ item.0 + 1 }}"
         groups: kafka-nodes
-      with_indexed_items: groups['kafka-nodes']|sort
+      with_indexed_items: "{{ groups['kafka-nodes']|sort }}"
 
 - name: "Show debug info"
   hosts: kafka-nodes
-  sudo: yes
-  sudo_user: root
+  become: yes
   tasks:
     - name: "Show Kafka nodes info"
       debug: var=hostvars[inventory_hostname]
@@ -22,14 +38,18 @@
 
 - name: "Apply the common role to all nodes"
   hosts: kafka-nodes
-  sudo: yes
-  sudo_user: root
+  become: yes
   roles:
     - common
 
-- name: "Apply zookeeper and kafka roles to the Kafka cluster"
+- name: "Apply the zookeeper role to the Zookeeper nodes"
+  hosts: zookeeper-nodes
+  become: yes
+  roles:
+    - zookeeper
+
+- name: "Apply the kafka role to the Kafka nodes"
   hosts: kafka-nodes
-  sudo: yes
-  sudo_user: root
+  become: yes
   roles:
     - kafka

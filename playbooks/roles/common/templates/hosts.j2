@@ -1,4 +1,5 @@
-127.0.0.1 localhost.localdomain localhost
+127.0.0.1 localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1 localhost localhost.localdomain localhost6 localhost6.localdomain6
 {% for node in groups['kafka-nodes'] %}
-{{ hostvars[node][hostvars[node]['cluster_interface']]['ipv4']['address'] }} {{ hostvars[node]['ansible_fqdn'] }} {{ hostvars[node]['ansible_hostname'] }}
+{{ hostvars[node][['ansible_', hostvars[node]['cluster_interface']]|join]['ipv4']['address'] }} {{ hostvars[node]['ansible_fqdn'] }} {{ hostvars[node]['ansible_hostname'] }}
 {% endfor %}

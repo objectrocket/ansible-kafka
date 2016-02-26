@@ -1,3 +1,10 @@
 ---
-- name: Restart iptables
+- name: restart iptables
   service: name=iptables state=restarted enabled=yes
+
+- name: reload firewalld
+  command: firewall-cmd --reload
+
+- name: update-grub
+  shell: "{{ update_grub }}"
+  when: "{{ ansible_distribution_major_version|int }} > 6"

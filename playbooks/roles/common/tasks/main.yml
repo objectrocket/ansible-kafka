@@ -1,39 +1,50 @@
 ---
-- name: Install packages
-  yum: name={{ item }} state=latest
-  with_items:
-    - python-simplejson
-    - man
-    - man-pages
-    - vim-enhanced
-    - sysstat
-    - lsof
-    - jwhois
-    - telnet
-    - nc
-    - ntp
-    - parted
-    - perl
-    - iotop
-    - links
-    - unzip
-    - curl
-    - wget
+- name: Load OS specific variables
+  include_vars: "{{ item }}"
+  with_first_found:
+    - files:
+        - "{{ ansible_os_family|lower }}.yml"
+        - "{{ ansible_os_family|lower }}-{{ansible_distribution_major_version }}.yml"
+        - defaults.yml
+      paths:
+        - ../vars
 
-- name: Disable yum excludes
-  lineinfile: dest=/etc/yum.conf backrefs=yes regexp='^exclude=(.*)$' line='#exclude=\1'
+- name: Install epel
+  yum: name={{ epel_url }} state=present update_cache=yes
+  when: ansible_os_family == "RedHat"
 
-- name: Update all packages
+- name: Ensure required packages are installed (yum)
+  yum:
+    name: "{{ item }}"
+    update_cache: yes
+    state: installed
+  with_items: "{{ packages }}"
+  when: ansible_os_family == "RedHat" and "{{ packages|length > 0 }}"
+
+- name: Ensure required packages are installed (apt)
+  apt:
+    name: "{{ item }}"
+    update_cache: yes
+    state: installed
+  with_items: "{{ packages }}"
+  when: ansible_os_family == "Debian" and "{{ packages|length > 0 }}"
+
+- name: Upgrade all packages (yum)
   yum: name=* state=latest
+  when: ansible_os_family == "RedHat"
 
-- name: Make sure ntpd is stopped
-  service: name=ntpd state=stopped
+- name: Upgrade all packages (apt)
+  apt: upgrade=dist
+  when: ansible_os_family == "Debian"
 
-- name: Start ntpdate
-  service: name=ntpdate state=started
+- name: Make sure the NTP service is stopped
+  service: name={{ ntp_service }} state=stopped
 
-- name: Start ntpd
-  service: name=ntpd state=started enabled=yes
+- name: Force NTP sync
+  command: "{{ ntp_sync }}"
+
+- name: Start the NTP service
+  service: name={{ ntp_service }} state=started enabled=yes
 
 - name: Set nofile limits
   lineinfile: dest=/etc/security/limits.conf
@@ -48,34 +59,60 @@
   lineinfile: dest=/etc/security/limits.d/90-nproc.conf
               insertafter=EOF
               state=present
+              create=yes
               line="{{ item }}"
               mode=0644
   with_items:
     - "* soft nproc 32768"
     - "* hard nproc 32768"
 
+- name: Set swappiness to 1
+  sysctl: name=vm.swappiness value=0 state=present
+
 - name: Get number of kernels in grub.conf
   shell: grep -E "^[[:blank:]]*kernel" /boot/grub/grub.conf | grep -v transparent_hugepage
   register: grep_result
+  when: ansible_os_family == "RedHat" and ansible_distribution_major_version == "6"
   ignore_errors: true
 
-- name: Disable Transparent Huge Pages
+- name: Disable Transparent Huge Pages in Grub 1
   lineinfile: dest=/boot/grub/grub.conf
               backrefs=True
               state=present
               regexp='(^\s*kernel(\s+(?!transparent_hugepage=never)[\w=/\-\.\,]+)*)\s*$'
               line='\1 transparent_hugepage=never'
   register: result
-  with_items: grep_result.stdout_lines
+  with_items: "{{ grep_result.stdout_lines }}"
+  when: ansible_os_family == "RedHat" and ansible_distribution_major_version == "6"
+
+- name: Disable Transparent Huge Pages in Grub 2
+  lineinfile: dest=/etc/default/grub
+              state=present
+              line='GRUB_CMDLINE_LINUX=$GRUB_CMDLINE_LINUX" transparent_hugepage=never"'
+  when: "{{ ansible_distribution_major_version|int }} > 6"
+  notify: update-grub
+
+- meta: flush_handlers
 
 - name: Disable Transparent Huge Pages until reboot
   shell: echo never > /sys/kernel/mm/transparent_hugepage/enabled && echo never > /sys/kernel/mm/transparent_hugepage/defrag
   ignore_errors: true
 
+- name: Set the tuned profile
+  copy: src=tuned.conf
+        dest=/etc/tuned/cassandra/
+        mode=0755
+  when: ansible_os_family == "RedHat" and ansible_distribution_major_version == "7"
+
+- name: Activate the tuned profile
+  shell: tuned-adm profile cassandra
+  when: ansible_os_family == "RedHat" and ansible_distribution_major_version == "7"
+
 - name: Set hosts file
   template: src=hosts.j2 dest=/etc/hosts mode=0644
 
-- include: iptables.yml
-  when: cloud_nodes_count is defined and cloud_nodes_count > 0
+- include: firewall.yml
+  when: cloud.nodes_count is defined and cloud.nodes_count > 0
 
 - include: partitioning.yml
+  when: data_disks_devices is defined and data_disks_devices

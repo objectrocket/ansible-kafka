@@ -22,7 +22,7 @@ broker.id={{ hostvars[inventory_hostname]['id'] }}
 ############################# Socket Server Settings #############################
 
 # The port the socket server listens on
-port=9092
+port={{ kafka_port }}
 
 # Hostname the broker will bind to. If not set, the server will bind to all interfaces
 #host.name=localhost
@@ -112,7 +112,7 @@ log.cleaner.enable=false
 # server. e.g. "127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002".
 # You can also append an optional chroot string to the urls to specify the
 # root directory for all kafka znodes.
-zookeeper.connect={% for server in play_hosts %}{{ hostvars[server]['ansible_fqdn'] }}:{{ zookeeper_client_port }}{% if not loop.last %},{% endif %}{% endfor %}
+zookeeper.connect={% for server in groups['zookeeper-nodes'] %}{{ hostvars[server]['ansible_fqdn'] }}:{{ zookeeper_client_port }}{% if not loop.last %},{% endif %}{% endfor %}
 
 
 # Timeout in ms for connecting to zookeeper
