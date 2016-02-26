@@ -14,7 +14,7 @@
         ansible_become_pass: "{{ hostvars[item.1].ansible_ssh_pass|default('') }}"
         id: "{{ item.0 + 1 }}"
         groups: zookeeper-nodes
-      with_indexed_items: groups['kafka-nodes']|sort|batch(3)|list|first
+      with_indexed_items: "{{ groups['kafka-nodes']|sort|batch(3)|list|first }}"
 
     - name: "Add all cluster nodes to the kafka-nodes group"
       add_host:
@@ -26,7 +26,7 @@
         ansible_become_pass: "{{ hostvars[item.1].ansible_ssh_pass|default('') }}"
         id: "{{ item.0 + 1 }}"
         groups: kafka-nodes
-      with_indexed_items: groups['kafka-nodes']|sort
+      with_indexed_items: "{{ groups['kafka-nodes']|sort }}"
 
 - name: "Show debug info"
   hosts: kafka-nodes

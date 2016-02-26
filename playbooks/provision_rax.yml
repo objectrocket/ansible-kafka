@@ -42,8 +42,8 @@
         state: present
         wait: true
       with_nested:
-        - rax_kafka.instances
-        - data_disks_devices
+        - "{{ rax_kafka.instances }}"
+        - "{{ data_disks_devices }}"
       when: cloud.nodes_count > 0 and cloud.cbs.build_cbs
 
     - name: "Attach CBS Volumes to kafka nodes"
@@ -57,8 +57,8 @@
         state: present
         wait: true
       with_nested:
-        - rax_kafka.instances
-        - data_disks_devices
+        - "{{ rax_kafka.instances }}"
+        - "{{ data_disks_devices }}"
       when: cloud.nodes_count > 0 and cloud.cbs.build_cbs
 
 - name: "Show debug info"
