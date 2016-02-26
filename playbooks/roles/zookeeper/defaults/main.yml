@@ -1,5 +1,4 @@
 ---
-apache_mirror: apache.mirror.anlx.net
 zookeeper_version: 3.4.8
 zookeeper_user: zookeeper
 zookeeper_group: zookeeper
@@ -7,4 +6,3 @@ zookeeper_conf_dir: /etc/zookeeper/conf
 zookeeper_log_dir: /var/log/zookeeper
 zookeeper_data_dir: /var/lib/zookeeper
 zookeeper_maxClientCnxns: 50
-zookeeper_client_port: 2181

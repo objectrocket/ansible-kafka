@@ -1,5 +1,8 @@
 ---
 kafka_version: 0.9.0.1
+apache_mirror: apache.mirror.anlx.net
+zookeeper_client_port: 2181
+
 cluster_interface: 'eth1'
 data_disks_devices: []
 
