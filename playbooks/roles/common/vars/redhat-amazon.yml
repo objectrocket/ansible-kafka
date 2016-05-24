@@ -1,0 +1,33 @@
+packages:
+  - java-1.8.0-openjdk-devel
+  - python-simplejson
+  - python26-httplib2
+  - python27-httplib2
+  - man
+  - man-pages
+  - vim-enhanced
+  - sysstat
+  - lsof
+  - jwhois
+  - nc
+  - libselinux-python
+  - ntp
+  - parted
+  - openssh-clients
+  - iotop
+  - unzip
+  - curl
+  - wget
+  - xfsprogs
+
+ntp_service: ntpd
+ntp_sync: "/usr/sbin/ntpd -gq"
+
+epel_rpm_url: "http://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm"
+epel_yum: "epel-release"
+
+resolv_conf: "/etc/resolv.conf"
+
+networking_path: "/etc/sysconfig/network-scripts"
+networking_eth: "redhat-ifcfg-eth.j2"
+networking_bond: "redhat-ifcfg-bond.j2"
