@@ -37,20 +37,20 @@
 
 - name: Install Kafka init script
   template: src=kafka-server.j2 dest=/etc/init.d/kafka-server mode=0755
-  notify: reload systemd
+  notify: Reload systemd
 
 - meta: flush_handlers
 
 - name: Configure Kafka server
   template: src=server.properties.j2 dest="{{kafka_conf_dir}}/server.properties"
-  notify: restart kafka
+  notify: Restart kafka
 
 - name: Upload log4j configs
   copy: src={{ item }} dest="{{ kafka_conf_dir }}/" owner=root group=root mode=644
   with_items:
     - log4j.properties
     - tools-log4j.properties
-  notify: restart kafka
+  notify: Restart kafka
 
 - meta: flush_handlers
 

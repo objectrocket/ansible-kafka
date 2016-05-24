@@ -101,7 +101,7 @@
               state=present
               line='GRUB_CMDLINE_LINUX=$GRUB_CMDLINE_LINUX" transparent_hugepage=never"'
   when: "{{ ansible_distribution_major_version|int }} > 6"
-  notify: update-grub
+  notify: Run update-grub
 
 - meta: flush_handlers
 
