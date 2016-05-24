@@ -120,7 +120,7 @@ Modify the same file at `~/ansible-kafka/playbooks/group_vars/all` to set the cl
 | domain      | The domain name used to build the nodes.                                                                  |
 | nodes_count | The desired number of nodes to be built.                                                                  |
 | image       | The OS image to be used. Can be `CentOS 6 (PVHVM)`, `CentOS 7 (PVHVM)` or `Ubuntu 14.04 LTS (Trusty Tahr) (PVHVM)`.       |
-| flavor      | [Size flavor](https://developer.rackspace.com/docs/cloud-servers/v2/developer-guide/#list-flavos-with-nova) of the nodes. |
+| flavor      | [Size flavor](https://developer.rackspace.com/docs/cloud-servers/v2/developer-guide/#list-flavors-with-nova) of the nodes. |
 | ssh keyfile | The SSH keyfile that will be placed on cluster nodes at build time.                                       |
 | ssh keyname | The name of the SSH key. Make sure you change this if another key was previously used with the same name. |
 
