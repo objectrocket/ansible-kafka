@@ -123,7 +123,7 @@
 
 - name: Include firewall.yml
   include: firewall.yml
-  when: cloud.nodes_count is defined and cloud.nodes_count > 0
+  when: rax_id is defined
 
 - name: Include partitioning.yml
   include: partitioning.yml
