@@ -17,14 +17,14 @@
 - name: Set permissions to Kafka folder
   file: path=/opt/kafka/ owner=root group=root recurse=yes
 
-- name: Create Kafka data directory
-  file: path="/disk{{ item.0 + 1 }}/kafka/data" state=directory owner={{ kafka_user }} group={{ kafka_group }}
-  with_indexed_items: "{{ data_disks_devices }}"
-  when: data_disks_devices is defined and data_disks_devices and data_disks_devices|length > 1
-
-- name: Create Kafka data directory
+- name: Create /kafka/data directory
   file: path=/kafka/data state=directory owner={{ kafka_user }} group={{ kafka_group }}
-  when: data_disks_devices is not defined or not data_disks_devices or data_disks_devices|length <= 1
+  when: data_disks_devices is not defined or not data_disks_devices or data_disks_devices|length <= 0
+
+- name: Create /disk/{0..n}/kafka/data directories
+  file: path="/disk/{{ item.0 + 1 }}/kafka/data" state=directory owner={{ kafka_user }} group={{ kafka_group }}
+  with_indexed_items: "{{ data_disks_devices }}"
+  when: data_disks_devices is defined and data_disks_devices
 
 - name: Create Kafka log directory
   file: path={{ kafka_log_dir }} state=directory owner={{ kafka_user }} group={{ kafka_group }}

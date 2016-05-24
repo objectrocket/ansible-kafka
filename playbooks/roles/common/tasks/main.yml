@@ -125,4 +125,16 @@
   when: cloud.nodes_count is defined and cloud.nodes_count > 0
 
 - include: partitioning.yml
-  when: data_disks_devices is defined and data_disks_devices
+  with_items:
+    - "{{ data_disks_devices|default([]) }}"
+
+- name: Mount kafka data disks under /disk/{0..n}
+  mount: state=mounted
+         src="/dev/{{ item.1 }}1"
+         name="/disk/{{ item.0 + 1 }}"
+         fstype="{{ data_disks_filesystem }}"
+         opts=defaults,noatime
+         dump=0
+         passno=0
+  with_indexed_items: "{{ data_disks_devices|default([]) }}"
+  when: data_disks_devices is defined and data_disks_devices and ansible_devices[item.1] is defined
