@@ -6,6 +6,8 @@ zookeeper_client_port: 2181
 
 cluster_interface: 'eth1'
 data_disks_devices: []
+#data_disks_devices: ['xvde']
+data_disks_filesystem: xfs
 
 cloud:
   region: 'LON'
