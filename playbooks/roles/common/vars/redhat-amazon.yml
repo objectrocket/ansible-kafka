@@ -1,7 +1,8 @@
 packages:
   - java-1.8.0-openjdk-devel
   - python-simplejson
-  - python-httplib2
+  - python26-httplib2
+  - python27-httplib2
   - man
   - man-pages
   - vim-enhanced
@@ -25,6 +26,8 @@ ntp_sync: "/usr/sbin/ntpd -gq"
 epel_rpm_url: "http://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm"
 epel_yum: "epel-release"
 
-datastax_repo: "redhat-datastax_repo.j2"
-datastax_repo_file: "/etc/yum.repos.d/datastax.repo"
-datastax_repo_key: "http://rpm.datastax.com/rpm/repo_key"
+resolv_conf: "/etc/resolv.conf"
+
+networking_path: "/etc/sysconfig/network-scripts"
+networking_eth: "redhat-ifcfg-eth.j2"
+networking_bond: "redhat-ifcfg-bond.j2"

@@ -1,24 +1,17 @@
 ---
-- name: Get disk alignment
-  shell: if [[ -e /sys/block/{{ data_disks_devices[0] }}/queue/optimal_io_size && -e /sys/block/{{ data_disks_devices[0] }}/alignment_offset && -e /sys/block/{{ data_disks_devices[0] }}/queue/physical_block_size ]]; then echo $[$(( ($(cat /sys/block/{{ data_disks_devices[0] }}/queue/optimal_io_size) + $(cat /sys/block/{{ data_disks_devices[0] }}/alignment_offset)) / $(cat /sys/block/{{ data_disks_devices[0] }}/queue/physical_block_size) )) | 2048]; else echo 2048; fi
-  when: ansible_devices[data_disks_devices[0]] is defined
+- name: Get disk alignment for disk {{ item }}
+  shell: if [[ -e /sys/block/{{ item }}/queue/optimal_io_size && -e /sys/block/{{ item }}/alignment_offset && -e /sys/block/{{ item }}/queue/physical_block_size ]]; then echo $[$(( ($(cat /sys/block/{{ item }}/queue/optimal_io_size) + $(cat /sys/block/{{ item }}/alignment_offset)) / $(cat /sys/block/{{ item }}/queue/physical_block_size) )) | 2048]; else echo 2048; fi
+  when: ansible_devices[item] is defined
   register: disk_offset
 
-- name: Partition and format data disks
-  shell: parted -s -a optimal /dev/{{ item }} mklabel gpt mkpart primary xfs {{ disk_offset.stdout|default("2048") }}s 100% && sleep 5 && partprobe /dev/{{ item }}; sleep 5
+- name: Partition disk {{ item }}
+  shell: parted -s -a optimal /dev/{{ item }} mklabel gpt mkpart primary {{ data_disks_filesystem }} {{ disk_offset.stdout|default("2048") }}s 100% && sleep 5 && partprobe /dev/{{ item }}; sleep 5
   when: ansible_devices[item] is defined and ansible_devices[item]['partitions'] == {}
-  with_items: "{{ data_disks_devices }}"
 
-- name: Create the filesystem on data disks
-  filesystem: dev="/dev/{{ item }}1" fstype="xfs"
+- name: Create the filesystem on disk {{ item }}
+  filesystem: dev="/dev/{{ item }}1" fstype="{{ data_disks_filesystem }}"
   when: ansible_devices[item] is defined
-  with_items: "{{ data_disks_devices }}"
 
-- name: Mount single data disk under /kafka
-  mount: state=mounted src="/dev/{{ data_disks_devices[0] }}1" name="/kafka" fstype=xfs opts=defaults,noatime dump=0 passno=0
-  when: ansible_devices[data_disks_devices[0]] is defined and data_disks_devices|length == 1
-
-- name: Mount multiple data disks under /disk{}
-  mount: state=mounted src="/dev/{{ item.1 }}1" name="/disk{{ item.0 + 1 }}" fstype=xfs opts=defaults,noatime dump=0 passno=0
-  when: ansible_devices[item.1] is defined and data_disks_devices|length > 1
-  with_indexed_items: "{{ data_disks_devices }}"
+- name: Disable periodic fsck on {{ item }}
+  shell: tune2fs -c0 -i0 /dev/{{ item }}1
+  when: ansible_devices[item] is defined and {{ data_disks_filesystem }}

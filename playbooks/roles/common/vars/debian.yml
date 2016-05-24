@@ -1,5 +1,5 @@
 packages:
-  - openjdk-7-jdk
+  - default-jdk
   - python-simplejson
   - man-db
   - vim

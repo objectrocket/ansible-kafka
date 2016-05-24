@@ -2,14 +2,14 @@
 #
 # kafka-server      This shell script takes care of starting and stopping Kafka
 #
-# chkconfig: - 81 19
+# chkconfig: 2345 81 19
 #
 ### BEGIN INIT INFO
 # Provides: kafka-server
 # Required-Start: $network $syslog $zookeeper-server
 # Required-Stop: $network $syslog
-# Default-Start:
-# Default-Stop:
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
 # Description: Kafka server
 # Short-Description: start and stop kafka-server
 ### END INIT INFO
