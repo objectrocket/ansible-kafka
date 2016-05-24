@@ -1,14 +1,14 @@
 ---
-- name: add group "zookeeper"
+- name: Add group "zookeeper"
   group: name={{ zookeeper_group }} system=yes
 
-- name: add user "zookeeper"
+- name: Add user "zookeeper"
   user: name={{ zookeeper_group }} group={{ zookeeper_group }} home={{ zookeeper_data_dir }} shell=/sbin/nologin system=yes
 
-- name: "Download the tarball"
+- name: Download the tarball
   get_url: url=http://{{ apache_mirror }}/zookeeper/stable/zookeeper-{{ zookeeper_version }}.tar.gz dest=/opt/zookeeper-{{ zookeeper_version }}.tar.gz
 
-- name: Extract archive
+- name: Extract the tarball
   unarchive: src=/opt/zookeeper-{{ zookeeper_version }}.tar.gz dest=/opt/ copy=no creates=/opt/zookeeper-{{ zookeeper_version }}
 
 - name: Symlink install directory

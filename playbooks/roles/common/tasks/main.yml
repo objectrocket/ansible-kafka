@@ -121,10 +121,12 @@
 - name: Set hosts file
   template: src=hosts.j2 dest=/etc/hosts mode=0644
 
-- include: firewall.yml
+- name: Include firewall.yml
+  include: firewall.yml
   when: cloud.nodes_count is defined and cloud.nodes_count > 0
 
-- include: partitioning.yml
+- name: Include partitioning.yml
+  include: partitioning.yml
   with_items:
     - "{{ data_disks_devices|default([]) }}"
 
